@@ -1,0 +1,29 @@
+# 构建产物
+target/
+*.class
+*.jar.original
+
+# 前端依赖与构建
+node_modules/
+dist/
+
+# IDE
+.idea/
+*.iml
+.vscode/
+
+# 日志与本地数据
+*.log
+derby-log/
+derby.log
+logs/
+uploads/
+
+# 本地环境变量与真实密钥（绝不提交）
+.env
+.env.local
+application-local.properties
+
+# 操作系统
+.DS_Store
+Thumbs.db

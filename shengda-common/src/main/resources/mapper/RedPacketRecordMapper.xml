@@ -1,0 +1,34 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.example.demo.mapper.RedPacketRecordMapper">
+    
+    <resultMap id="RedPacketRecordResultMap" type="com.example.demo.model.RedPacketRecord">
+        <id column="id" property="id"/>
+        <result column="packet_no" property="packetNo"/>
+        <result column="user_name" property="userName"/>
+        <result column="amount" property="amount"/>
+        <result column="grab_time" property="grabTime"/>
+    </resultMap>
+
+    <!-- 插入领取记录 -->
+    <insert id="insertRecord" parameterType="com.example.demo.model.RedPacketRecord" useGeneratedKeys="true" keyProperty="id">
+        INSERT INTO red_packet_record (packet_no, user_name, amount, grab_time)
+        VALUES (#{packetNo}, #{userName}, #{amount}, NOW())
+    </insert>
+
+    <!-- 检查用户是否已抢过该红包 -->
+    <select id="countByPacketNoAndUserName" resultType="int">
+        SELECT COUNT(*) FROM red_packet_record 
+        WHERE packet_no = #{packetNo} AND user_name = #{userName}
+    </select>
+
+    <!-- 查询用户的领取记录 -->
+    <select id="selectByUserName" resultMap="RedPacketRecordResultMap">
+        SELECT * FROM red_packet_record WHERE user_name = #{userName} ORDER BY grab_time DESC
+    </select>
+
+    <!-- 查询红包的领取记录 -->
+    <select id="selectByPacketNo" resultMap="RedPacketRecordResultMap">
+        SELECT * FROM red_packet_record WHERE packet_no = #{packetNo} ORDER BY grab_time ASC
+    </select>
+</mapper>

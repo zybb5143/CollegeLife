@@ -1,0 +1,19 @@
+server:
+  port: 10020
+
+spring:
+  application:
+    name: shengda-tie-service
+  datasource:
+    url: jdbc:mysql://localhost:3306/shengda?useSSL=false&serverTimezone=Asia/Shanghai&characterEncoding=utf-8&allowPublicKeyRetrieval=true
+    username: ${MYSQL_USER:root}
+    password: ${MYSQL_PASSWORD:111111}
+    driver-class-name: com.mysql.cj.jdbc.Driver
+  cloud:
+    nacos:
+      discovery:
+        server-addr: localhost:8848
+        # 如需指定命名空间/分组，可在此补充 namespace / group
+mybatis:
+  mapper-locations: classpath:mapper/*.xml
+  type-aliases-package: com.shengda.tie.model

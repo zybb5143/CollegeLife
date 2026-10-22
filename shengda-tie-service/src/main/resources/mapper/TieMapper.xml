@@ -1,0 +1,92 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.shengda.tie.mapper.TieMapper">
+
+    <!-- 结果映射：下划线转驼峰 -->
+    <resultMap id="TieResultMap" type="com.shengda.tie.model.Tie">
+        <id property="tieId" column="tie_id" />
+        <result property="tieTitle" column="tie_title" />
+        <result property="tieContent" column="tie_content" />
+        <result property="tieCreateTime" column="tie_create_time" />
+        <result property="userName" column="user_name" />
+        <result property="tieImage" column="tie_image" />
+        <result property="tieType" column="tie_type" />
+        <result property="productId" column="product_id" />
+    </resultMap>
+
+    <!-- 插入帖子 -->
+    <insert id="insertTie" parameterType="com.shengda.tie.model.Tie" useGeneratedKeys="true" keyProperty="tieId">
+        INSERT INTO tie (tie_title, tie_content, tie_create_time, user_name, tie_image, tie_type, product_id)
+        VALUES (#{tieTitle}, #{tieContent}, #{tieCreateTime}, #{userName}, #{tieImage}, #{tieType}, #{productId})
+    </insert>
+
+    <!-- 获取最后插入的ID -->
+    <select id="getLastInsertId" resultType="int">
+        SELECT LAST_INSERT_ID()
+    </select>
+
+    <!-- 根据用户名查询帖子 -->
+    <select id="getTiesByUserName" resultMap="TieResultMap">
+        SELECT tie_id, tie_title, tie_content, tie_create_time, user_name, tie_image, tie_type, product_id
+        FROM tie
+        WHERE user_name = #{userName}
+          AND (tie_image NOT LIKE '%|PENDING%' OR tie_image IS NULL)
+        ORDER BY tie_create_time DESC
+    </select>
+
+    <!-- 查询所有帖子 -->
+    <select id="getAllTies" resultMap="TieResultMap">
+        SELECT tie_id, tie_title, tie_content, tie_create_time, user_name, tie_image, tie_type, product_id
+        FROM tie
+        WHERE tie_image NOT LIKE '%|PENDING%' OR tie_image IS NULL
+        ORDER BY tie_create_time DESC
+    </select>
+
+    <!-- 根据 ID 查询帖子详情 -->
+    <select id="getTieById" resultMap="TieResultMap">
+        SELECT tie_id, tie_title, tie_content, tie_create_time, user_name, tie_image, tie_type, product_id
+        FROM tie
+        WHERE tie_id = #{tieId}
+    </select>
+
+    <!-- 更新帖子图片 -->
+    <update id="updateTieImage">
+        UPDATE tie SET tie_image = #{tieImage}
+        WHERE tie_id = #{tieId}
+    </update>
+
+    <!-- 获取最新的 10 个帖子 -->
+    <select id="getLatest10Ties" resultMap="TieResultMap">
+        SELECT tie_id, tie_title, tie_content, tie_create_time, user_name, tie_image, tie_type, product_id
+        FROM tie
+        WHERE tie_image NOT LIKE '%|PENDING%' OR tie_image IS NULL
+        ORDER BY tie_create_time DESC
+        LIMIT 10
+    </select>
+
+    <!-- 获取用户最新创建的帖子 ID -->
+    <select id="getLatestTieId" resultType="int">
+        SELECT tie_id FROM tie
+        WHERE user_name = #{userName}
+        ORDER BY tie_create_time DESC
+        LIMIT 1
+    </select>
+
+    <!-- 标记帖子为待审核状态 -->
+    <update id="markTieAsPending">
+        UPDATE tie SET tie_image = CONCAT(IFNULL(tie_image, ''), '|PENDING')
+        WHERE tie_id = #{tieId}
+    </update>
+
+    <!-- 更新帖子标题与内容 -->
+    <update id="updateTieContent">
+        UPDATE tie SET tie_title = #{tieTitle}, tie_content = #{tieContent}
+        WHERE tie_id = #{tieId}
+    </update>
+
+    <!-- 根据 ID 删除帖子（回复由外键 ON DELETE CASCADE 自动清理） -->
+    <delete id="deleteTie">
+        DELETE FROM tie WHERE tie_id = #{tieId}
+    </delete>
+
+</mapper>

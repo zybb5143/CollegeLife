@@ -1,0 +1,54 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.example.demo.mapper.RedPacketMapper">
+    
+    <resultMap id="RedPacketResultMap" type="com.example.demo.model.RedPacket">
+        <id column="id" property="id"/>
+        <result column="packet_no" property="packetNo"/>
+        <result column="total_amount" property="totalAmount"/>
+        <result column="total_count" property="totalCount"/>
+        <result column="remain_count" property="remainCount"/>
+        <result column="remain_amount" property="remainAmount"/>
+        <result column="publisher" property="publisher"/>
+        <result column="create_time" property="createTime"/>
+        <result column="expire_time" property="expireTime"/>
+        <result column="status" property="status"/>
+    </resultMap>
+
+    <!-- 插入红包 -->
+    <insert id="insertRedPacket" parameterType="com.example.demo.model.RedPacket" useGeneratedKeys="true" keyProperty="id">
+        INSERT INTO red_packet (packet_no, total_amount, total_count, remain_count, remain_amount, publisher, expire_time, status)
+        VALUES (#{packetNo}, #{totalAmount}, #{totalCount}, #{totalCount}, #{totalAmount}, #{publisher}, #{expireTime}, #{status})
+    </insert>
+
+    <!-- 根据红包编号查询 -->
+    <select id="selectByPacketNo" resultMap="RedPacketResultMap">
+        SELECT * FROM red_packet WHERE packet_no = #{packetNo}
+    </select>
+
+    <!-- 更新剩余数量和金额 -->
+    <update id="updateRemainCountAndAmount">
+        UPDATE red_packet 
+        SET remain_count = #{remainCount}, remain_amount = #{remainAmount}
+        WHERE packet_no = #{packetNo}
+    </update>
+
+    <!-- 更新状态 -->
+    <update id="updateStatus">
+        UPDATE red_packet SET status = #{status} WHERE packet_no = #{packetNo}
+    </update>
+
+    <!-- 原子扣减剩余数量与剩余金额（避免先查后写导致的丢失更新） -->
+    <update id="decrementRemain">
+        UPDATE red_packet
+        SET remain_count = remain_count - 1,
+            remain_amount = remain_amount - #{amount}
+        WHERE packet_no = #{packetNo}
+    </update>
+
+    <!-- 剩余数量为 0 时置为已结束 -->
+    <update id="finishIfEmpty">
+        UPDATE red_packet SET status = 1
+        WHERE packet_no = #{packetNo} AND remain_count &lt;= 0
+    </update>
+</mapper>

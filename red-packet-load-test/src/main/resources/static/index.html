@@ -1,0 +1,266 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>抢红包压测工具</title>
+    <style>
+        * { box-sizing: border-box; margin: 0; padding: 0; }
+        body {
+            font-family: "Segoe UI", "Microsoft YaHei", sans-serif;
+            background: #f4f6fb;
+            color: #24292f;
+            padding: 24px;
+        }
+        .container { max-width: 960px; margin: 0 auto; }
+        h1 { font-size: 22px; margin-bottom: 4px; }
+        .subtitle { color: #6b7280; font-size: 13px; margin-bottom: 20px; }
+        .card {
+            background: #fff;
+            border-radius: 10px;
+            box-shadow: 0 1px 4px rgba(0,0,0,0.08);
+            padding: 20px;
+            margin-bottom: 20px;
+        }
+        .form-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 16px;
+        }
+        label { display: block; font-size: 13px; font-weight: 600; margin-bottom: 6px; color: #374151; }
+        input[type=number], input[type=text] {
+            width: 100%;
+            padding: 9px 10px;
+            border: 1px solid #d1d5db;
+            border-radius: 6px;
+            font-size: 14px;
+        }
+        input:focus { outline: none; border-color: #4f7cff; }
+        .host-hint { color: #9ca3af; font-size: 12px; margin-top: 4px; }
+        .checks { display: flex; gap: 24px; margin-top: 18px; }
+        .checks label { display: flex; align-items: center; gap: 6px; font-weight: 500; margin: 0; }
+        .btn {
+            margin-top: 18px;
+            background: #4f7cff;
+            color: #fff;
+            border: none;
+            padding: 11px 28px;
+            font-size: 15px;
+            border-radius: 6px;
+            cursor: pointer;
+        }
+        .btn:hover { background: #3d68e8; }
+        .btn:disabled { background: #9db4f0; cursor: not-allowed; }
+        .status { margin-top: 14px; font-size: 14px; color: #6b7280; min-height: 20px; }
+        .status.error { color: #dc2626; }
+        table { width: 100%; border-collapse: collapse; font-size: 14px; }
+        th, td { padding: 9px 12px; text-align: left; border-bottom: 1px solid #eef0f4; }
+        th { background: #f9fafb; color: #374151; font-weight: 600; }
+        /* ===== 压测结果 ===== */
+        .result-head {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            flex-wrap: wrap;
+            margin-bottom: 18px;
+            padding-bottom: 14px;
+            border-bottom: 1px solid #eef0f4;
+        }
+        .badge {
+            font-size: 13px;
+            font-weight: 700;
+            color: #fff;
+            padding: 5px 14px;
+            border-radius: 999px;
+            letter-spacing: .5px;
+        }
+        .badge.redis { background: linear-gradient(135deg, #ff6b6b, #d63b3b); }
+        .badge.mysql { background: linear-gradient(135deg, #5b9bf5, #2f7ed8); }
+        .target { color: #6b7280; font-size: 13px; font-family: Consolas, Menlo, monospace; }
+
+        .kpi-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+            gap: 14px;
+            margin-bottom: 22px;
+        }
+        .kpi {
+            background: linear-gradient(180deg, #fbfcff, #f4f7fe);
+            border: 1px solid #eef0f6;
+            border-radius: 10px;
+            padding: 16px;
+            text-align: center;
+        }
+        .kpi .kpi-label { font-size: 12px; color: #8a90a2; margin-bottom: 8px; }
+        .kpi .kpi-value { font-size: 26px; font-weight: 700; color: #24292f; line-height: 1; }
+        .kpi .kpi-unit { font-size: 12px; color: #9ca3af; margin-left: 3px; font-weight: 500; }
+        .kpi.accent { background: linear-gradient(180deg, #f2f6ff, #e8efff); border-color: #dce6fb; }
+        .kpi.accent .kpi-value { color: #4f7cff; }
+
+        .detail-title { font-size: 14px; font-weight: 700; color: #374151; margin-bottom: 10px; }
+        .metric-name { color: #6b7280; width: 45%; }
+        td.val { font-weight: 600; text-align: right; }
+
+        .conclusion {
+            margin-bottom: 18px;
+            padding: 14px;
+            background: #f0f7ff;
+            border: 1px solid #dceafc;
+            border-radius: 8px;
+            font-size: 15px;
+            text-align: center;
+            color: #2f6fd0;
+        }
+        #result { display: none; }
+    </style>
+</head>
+<body>
+<div class="container">
+    <h1>抢红包压测工具</h1>
+    <div class="subtitle">主机固定为 localhost，一次只压测一个端口，并在 Redis / MySQL 两个抢红包接口中二选一。</div>
+
+    <div class="card">
+        <div class="form-grid">
+            <div>
+                <label for="port">目标端口号 *</label>
+                <input type="number" id="port" value="10010" min="1" max="65535">
+                <div class="host-hint">http://localhost:<span id="portEcho">10010</span></div>
+            </div>
+            <div>
+                <label for="packetNo">红包编号 *</label>
+                <input type="text" id="packetNo" value="TEST_PACKET_001">
+                <div class="host-hint">需提前在目标服务发布好该红包</div>
+            </div>
+            <div>
+                <label for="concurrency">并发线程数</label>
+                <input type="number" id="concurrency" value="100" min="1">
+            </div>
+            <div>
+                <label for="totalRequests">总请求数</label>
+                <input type="number" id="totalRequests" value="500" min="1">
+            </div>
+        </div>
+
+        <div class="checks">
+            <label><input type="radio" name="version" value="redis" checked> 压测 Redis 版本 (/api/redpacket/grab)</label>
+            <label><input type="radio" name="version" value="mysql"> 压测 MySQL 版本 (/api/mysql/redpacket/grab)</label>
+        </div>
+
+        <button class="btn" id="runBtn" onclick="runTest()">开始压测</button>
+        <div class="status" id="status"></div>
+    </div>
+
+    <div class="card" id="result">
+        <div class="result-head">
+            <span class="badge redis" id="verBadge">Redis 版本</span>
+            <span class="target" id="targetUrl"></span>
+        </div>
+        <div class="conclusion" id="conclusion" style="display:none;"></div>
+        <div class="kpi-grid" id="kpiGrid"></div>
+        <div class="detail-title">详细指标</div>
+        <table id="detailTable"></table>
+    </div>
+</div>
+
+<script>
+    const portInput = document.getElementById('port');
+    portInput.addEventListener('input', () => {
+        document.getElementById('portEcho').textContent = portInput.value || '-';
+    });
+
+    async function runTest() {
+        const btn = document.getElementById('runBtn');
+        const statusEl = document.getElementById('status');
+        const version = document.querySelector('input[name="version"]:checked').value;
+        const params = {
+            port: parseInt(portInput.value, 10),
+            packetNo: document.getElementById('packetNo').value.trim(),
+            concurrency: parseInt(document.getElementById('concurrency').value, 10),
+            totalRequests: parseInt(document.getElementById('totalRequests').value, 10),
+            enableRedis: version === 'redis',
+            enableMysql: version === 'mysql'
+        };
+
+        btn.disabled = true;
+        statusEl.className = 'status';
+        statusEl.textContent = '压测执行中，请稍候…（高并发下可能需要几十秒）';
+        document.getElementById('result').style.display = 'none';
+
+        try {
+            const resp = await fetch('/api/loadtest/run', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify(params)
+            });
+            const data = await resp.json();
+            if (!resp.ok) {
+                statusEl.className = 'status error';
+                statusEl.textContent = data.error || ('请求失败：HTTP ' + resp.status);
+                return;
+            }
+            statusEl.className = 'status';
+            statusEl.textContent = '压测完成！目标：' + data.baseUrl;
+            render(data);
+        } catch (e) {
+            statusEl.className = 'status error';
+            statusEl.textContent = '请求异常：' + e.message;
+        } finally {
+            btn.disabled = false;
+        }
+    }
+
+    function render(data) {
+        const r = data.redis || data.mysql;
+        if (!r) return;
+        const isRedis = !!data.redis;
+
+        document.getElementById('result').style.display = 'block';
+
+        // 头部徽章 + 目标地址
+        const badge = document.getElementById('verBadge');
+        badge.textContent = isRedis ? 'Redis 版本' : 'MySQL 版本';
+        badge.className = 'badge ' + (isRedis ? 'redis' : 'mysql');
+        document.getElementById('targetUrl').textContent =
+            data.baseUrl + '  ·  红包 ' + data.packetNo;
+
+        // 对比结论（仅当两个版本都压测时才有）
+        const conclusion = document.getElementById('conclusion');
+        if (data.speedRatio != null) {
+            conclusion.style.display = 'block';
+            conclusion.innerHTML = '结论：Redis 版本比 MySQL 版本快 <b>' + data.speedRatio + '</b> 倍';
+        } else {
+            conclusion.style.display = 'none';
+        }
+
+        // 核心 KPI 卡片
+        document.getElementById('kpiGrid').innerHTML =
+            kpi('TPS', r.tps, '次/秒', true) +
+            kpi('总耗时', r.totalTimeMs, 'ms') +
+            kpi('成功率', r.successRate, '%', true) +
+            kpi('平均响应', r.avgResponseTime, 'ms');
+
+        // 详细指标表
+        const min = r.minResponseTime === -1 ? 'N/A' : (r.minResponseTime + ' ms');
+        document.getElementById('detailTable').innerHTML = `
+            <tr><td class="metric-name">并发线程数</td><td class="val">${r.concurrency}</td></tr>
+            <tr><td class="metric-name">总请求数</td><td class="val">${r.totalRequests}</td></tr>
+            <tr><td class="metric-name">成功次数</td><td class="val">${r.successCount}</td></tr>
+            <tr><td class="metric-name">失败次数</td><td class="val">${r.failCount}</td></tr>
+            <tr><td class="metric-name">异常次数</td><td class="val">${r.errorCount}</td></tr>
+            <tr><td class="metric-name">成功率</td><td class="val">${r.successRate}%</td></tr>
+            <tr><td class="metric-name">总耗时</td><td class="val">${r.totalTimeMs} ms</td></tr>
+            <tr><td class="metric-name">TPS</td><td class="val">${r.tps} 次/秒</td></tr>
+            <tr><td class="metric-name">平均响应时间</td><td class="val">${r.avgResponseTime} ms</td></tr>
+            <tr><td class="metric-name">最小响应时间</td><td class="val">${min}</td></tr>
+            <tr><td class="metric-name">最大响应时间</td><td class="val">${r.maxResponseTime} ms</td></tr>`;
+    }
+
+    function kpi(label, value, unit, accent) {
+        return `<div class="kpi ${accent ? 'accent' : ''}">
+            <div class="kpi-label">${label}</div>
+            <div class="kpi-value">${value}<span class="kpi-unit">${unit}</span></div>
+        </div>`;
+    }
+</script>
+</body>
+</html>

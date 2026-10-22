@@ -1,0 +1,25 @@
+实验名称：Spring Cloud实验：Nacos微服务与配置中心
+
+一、实验要求
+1. 新建子服务 shengda-product-service，端口 10021，注册到 Nacos。
+2. 主APP 的商品/订单接口路径不变，改成用 Feign 调子服务；子服务挂了就报错，不许静默返回空数据。
+3. 商品图片上传、登录校验留在主APP，子服务只管读写数据库。
+4. 加一个 Config：订单创建后多少分钟过期，写在 Nacos 配置中心，改完不重启就生效。
+5. 交实验报告时，对新增代码截图：子服务的目录结构、启动主类 ProductServiceApplication、
+   ProductServiceClient 各一张，再补一张页面功能跑通的截图。
+
+二、实验步骤
+1. 新建子服务模块 shengda-product-service，端口 10021，写启动类和 application.yml。
+2. 把商品和订单的 Model、Mapper（含 XML）、Service 复制到子服务，包名 com.shengda.product，
+   对外开无鉴权接口：/product/list、/product/create、/order/create、/order/list。
+3. 主APP 加 ProductServiceClient（@FeignClient("shengda-product-service")），商品和订单的 Service 改成只调
+   这个 Client，删掉原来的 Mapper 引用和 XML。
+4. 动态配置过期时间：订单表加一个 expire_time 字段，子服务加 nacos-config 依赖并在
+   bootstrap.properties 里指向 localhost:8848，配置中心新建 data-id 写 order.expire-minutes=30，
+   下单时用这个值算出 expire_time 存库。
+5. 依次启动 Nacos、MySQL、子服务、主APP，在页面上验证发布商品、列表、详情、下单、我的订单；
+   关掉子服务重跑一遍，确认是报错不是空列表；再把配置里的 30 改成 5，不重启，
+   重新下单查数据库，确认 expire_time 变成 5 分钟后。
+
+三、实验流程
+不需要流程图，对新增的代码（如子服务的目录结构、启动主类、调用自服务代码处进行截图）

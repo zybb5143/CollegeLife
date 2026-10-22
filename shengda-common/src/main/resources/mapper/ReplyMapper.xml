@@ -1,0 +1,24 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.example.demo.mapper.ReplyMapper">
+    
+    <!-- 结果映射：下划线转驼峰 -->
+    <resultMap id="ReplyResultMap" type="com.example.demo.model.Reply">
+        <id property="replyId" column="reply_id" />
+        <result property="replyContent" column="reply_content" />
+        <result property="replyCreateTime" column="reply_create_time" />
+        <result property="userName" column="user_name" />
+        <result property="tieId" column="tie_id" />
+    </resultMap>
+    
+    <insert id="insertReply">
+        INSERT INTO reply (reply_content, reply_create_time, user_name, tie_id)
+        VALUES (#{replyContent}, #{replyCreateTime}, #{userName}, #{tieId})
+    </insert>
+    
+    <select id="getRepliesByTieId" resultMap="ReplyResultMap">
+        SELECT * FROM reply 
+        WHERE tie_id = #{tieId}
+        ORDER BY reply_create_time ASC
+    </select>
+</mapper>

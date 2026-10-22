@@ -1,0 +1,53 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.example.demo.mapper.HomeworkSubmissionMapper">
+    
+    <resultMap id="SubmissionResultMap" type="com.example.demo.model.HomeworkSubmission">
+        <id column="submission_id" property="submissionId"/>
+        <result column="question_id" property="questionId"/>
+        <result column="user_name" property="userName"/>
+        <result column="answer_content" property="answerContent"/>
+        <result column="answer_language" property="answerLanguage"/>
+        <result column="status" property="status"/>
+        <result column="submit_time" property="submitTime"/>
+        <result column="question_title" property="questionTitle"/>
+        <result column="course_name" property="courseName"/>
+    </resultMap>
+
+    <!-- 提交答案 -->
+    <insert id="insertSubmission" parameterType="com.example.demo.model.HomeworkSubmission">
+        INSERT INTO homework_submission (question_id, user_name, answer_content, answer_language, status)
+        VALUES (#{questionId}, #{userName}, #{answerContent}, #{answerLanguage}, #{status})
+    </insert>
+
+    <!-- 根据ID查询 -->
+    <select id="selectSubmissionById" resultMap="SubmissionResultMap">
+        SELECT s.*, q.question_title, q.course_name 
+        FROM homework_submission s
+        LEFT JOIN homework_question q ON s.question_id = q.question_id
+        WHERE s.submission_id = #{submissionId}
+    </select>
+
+    <!-- 查询用户的提交记录 -->
+    <select id="selectByUserName" resultMap="SubmissionResultMap">
+        SELECT s.*, q.question_title, q.course_name 
+        FROM homework_submission s
+        LEFT JOIN homework_question q ON s.question_id = q.question_id
+        WHERE s.user_name = #{userName}
+        ORDER BY s.submit_time DESC
+    </select>
+
+    <!-- 查询某题目的所有提交 -->
+    <select id="selectByQuestionId" resultMap="SubmissionResultMap">
+        SELECT s.*, q.question_title, q.course_name 
+        FROM homework_submission s
+        LEFT JOIN homework_question q ON s.question_id = q.question_id
+        WHERE s.question_id = #{questionId}
+        ORDER BY s.submit_time DESC
+    </select>
+
+    <!-- 更新状态 -->
+    <update id="updateStatus">
+        UPDATE homework_submission SET status = #{status} WHERE submission_id = #{submissionId}
+    </update>
+</mapper>

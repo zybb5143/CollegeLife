@@ -1,0 +1,32 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.example.demo.mapper.HomeworkGradingMapper">
+    
+    <resultMap id="GradingResultMap" type="com.example.demo.model.HomeworkGrading">
+        <id column="grading_id" property="gradingId"/>
+        <result column="submission_id" property="submissionId"/>
+        <result column="user_name" property="userName"/>
+        <result column="score" property="score"/>
+        <result column="ai_feedback" property="aiFeedback"/>
+        <result column="correctness_analysis" property="correctnessAnalysis"/>
+        <result column="improvement_suggestions" property="improvementSuggestions"/>
+        <result column="knowledge_points" property="knowledgePoints"/>
+        <result column="grade_time" property="gradeTime"/>
+    </resultMap>
+
+    <!-- 保存批改记录 -->
+    <insert id="insertGrading" parameterType="com.example.demo.model.HomeworkGrading">
+        INSERT INTO homework_grading (submission_id, user_name, score, ai_feedback, correctness_analysis, improvement_suggestions, knowledge_points)
+        VALUES (#{submissionId}, #{userName}, #{score}, #{aiFeedback}, #{correctnessAnalysis}, #{improvementSuggestions}, #{knowledgePoints})
+    </insert>
+
+    <!-- 根据提交ID查询 -->
+    <select id="selectBySubmissionId" resultMap="GradingResultMap">
+        SELECT * FROM homework_grading WHERE submission_id = #{submissionId}
+    </select>
+
+    <!-- 查询用户的批改记录 -->
+    <select id="selectByUserName" resultMap="GradingResultMap">
+        SELECT * FROM homework_grading WHERE user_name = #{userName} ORDER BY grade_time DESC
+    </select>
+</mapper>

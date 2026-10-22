@@ -1,0 +1,49 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.example.demo.mapper.RedPacketAmountMapper">
+
+    <!-- 批量插入红包金额 -->
+    <insert id="batchInsertAmounts">
+        INSERT INTO red_packet_amount (packet_no, amount, is_grabbed)
+        VALUES
+        <foreach collection="amounts" item="amount" separator=",">
+            (#{packetNo}, #{amount}, 0)
+        </foreach>
+    </insert>
+
+    <!-- 查询未抢的金额（按ID顺序获取第一个） -->
+    <select id="selectFirstUngrabbedAmount" resultType="java.math.BigDecimal">
+        SELECT amount FROM red_packet_amount 
+        WHERE packet_no = #{packetNo} AND is_grabbed = 0 
+        ORDER BY id ASC 
+        LIMIT 1
+    </select>
+
+    <!-- 标记金额为已抢 -->
+    <update id="markAsGrabbed">
+        UPDATE red_packet_amount 
+        SET is_grabbed = 1 
+        WHERE packet_no = #{packetNo} AND amount = #{amount} AND is_grabbed = 0
+        LIMIT 1
+    </update>
+
+    <!-- 统计未抢的数量 -->
+    <select id="countUngrabbed" resultType="int">
+        SELECT COUNT(*) FROM red_packet_amount 
+        WHERE packet_no = #{packetNo} AND is_grabbed = 0
+    </select>
+
+    <!-- 加锁查询第一个未抢的金额行（FOR UPDATE 行锁，避免并发抢到同一行导致超发） -->
+    <select id="selectFirstUngrabbedForUpdate" resultType="java.util.Map">
+        SELECT id, amount FROM red_packet_amount
+        WHERE packet_no = #{packetNo} AND is_grabbed = 0
+        ORDER BY id ASC
+        LIMIT 1
+        FOR UPDATE
+    </select>
+
+    <!-- 按主键 id 标记为已抢 -->
+    <update id="markAsGrabbedById">
+        UPDATE red_packet_amount SET is_grabbed = 1 WHERE id = #{id}
+    </update>
+</mapper>

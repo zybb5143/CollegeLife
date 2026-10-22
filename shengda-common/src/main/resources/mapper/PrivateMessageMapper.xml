@@ -1,0 +1,70 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.example.demo.mapper.PrivateMessageMapper">
+    
+    <resultMap id="PrivateMessageResult" type="com.example.demo.model.PrivateMessage">
+        <result column="message_id" property="messageId"/>
+        <result column="sender_name" property="senderName"/>
+        <result column="receiver_name" property="receiverName"/>
+        <result column="message_content" property="messageContent"/>
+        <result column="message_type" property="messageType"/>
+        <result column="product_id" property="productId"/>
+        <result column="is_read" property="isRead"/>
+        <result column="send_time" property="sendTime"/>
+    </resultMap>
+    
+    <!-- 发送消息 -->
+    <insert id="insert" parameterType="com.example.demo.model.PrivateMessage" useGeneratedKeys="true" keyProperty="messageId">
+        INSERT INTO private_message (
+            sender_name, receiver_name, message_content, message_type, product_id
+        ) VALUES (
+            #{senderName}, #{receiverName}, #{messageContent}, #{messageType}, #{productId}
+        )
+    </insert>
+    
+    <!-- 查询两人之间的聊天记录 -->
+    <select id="getConversation" resultMap="PrivateMessageResult">
+        SELECT * FROM private_message 
+        WHERE (sender_name = #{user1} AND receiver_name = #{user2})
+           OR (sender_name = #{user2} AND receiver_name = #{user1})
+        ORDER BY send_time ASC
+    </select>
+    
+    <!-- 查询用户的对话列表：每个对话对象只取最新一条消息，避免全表返回 -->
+    <select id="getUserConversations" resultMap="PrivateMessageResult">
+        SELECT pm.* FROM private_message pm
+        INNER JOIN (
+            SELECT
+                CASE WHEN sender_name = #{userName} THEN receiver_name ELSE sender_name END AS partner,
+                MAX(send_time) AS last_time
+            FROM private_message
+            WHERE sender_name = #{userName} OR receiver_name = #{userName}
+            GROUP BY partner
+        ) t ON t.last_time = pm.send_time
+           AND t.partner = CASE WHEN pm.sender_name = #{userName} THEN pm.receiver_name ELSE pm.sender_name END
+        WHERE pm.sender_name = #{userName} OR pm.receiver_name = #{userName}
+        ORDER BY pm.send_time DESC
+    </select>
+    
+    <!-- 获取未读消息数量 -->
+    <select id="getUnreadCount" resultType="int">
+        SELECT COUNT(*) FROM private_message 
+        WHERE receiver_name = #{receiverName} AND is_read = 0
+    </select>
+    
+    <!-- 标记消息为已读 -->
+    <update id="markAsRead">
+        UPDATE private_message 
+        SET is_read = 1
+        WHERE message_id = #{messageId}
+    </update>
+    
+    <!-- 批量标记某人的消息为已读 -->
+    <update id="markAllAsRead">
+        UPDATE private_message 
+        SET is_read = 1
+        WHERE sender_name = #{senderName} 
+          AND receiver_name = #{receiverName}
+          AND is_read = 0
+    </update>
+</mapper>

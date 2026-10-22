@@ -1,0 +1,50 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+         xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
+    <modelVersion>4.0.0</modelVersion>
+    <parent>
+        <groupId>com.shengda</groupId>
+        <artifactId>shengda-parent</artifactId>
+        <version>0.0.1-SNAPSHOT</version>
+    </parent>
+    <artifactId>shengda-tie-service</artifactId>
+    <packaging>jar</packaging>
+    <description>实验级：帖子(Tie)独立微服务，注册到 Nacos 并暴露 REST 接口</description>
+
+    <!--
+      实验级说明：
+      - 刻意【不依赖 shengda-common】，并把代码放到独立包 com.shengda.tie，
+        目的是避免和单体里 com.example.demo 的同名 TieService/TieMapper Bean 冲突（重复注册、mapper 扫描打架）。
+      - 只迁移 tie 这一竖切片、只暴露接口，不考虑跨服务事务/一致性。
+      - Tie 使用普通 POJO（不引 lombok），保证 mvn 直接可编译。
+    -->
+    <dependencies>
+        <dependency>
+            <groupId>org.springframework.boot</groupId>
+            <artifactId>spring-boot-starter-web</artifactId>
+        </dependency>
+        <dependency>
+            <groupId>org.mybatis.spring.boot</groupId>
+            <artifactId>mybatis-spring-boot-starter</artifactId>
+        </dependency>
+        <dependency>
+            <groupId>com.mysql</groupId>
+            <artifactId>mysql-connector-j</artifactId>
+            <scope>runtime</scope>
+        </dependency>
+        <!-- Nacos 服务注册与发现（版本由父 pom 的 Spring Cloud Alibaba BOM 管理） -->
+        <dependency>
+            <groupId>com.alibaba.cloud</groupId>
+            <artifactId>spring-cloud-starter-alibaba-nacos-discovery</artifactId>
+        </dependency>
+    </dependencies>
+
+    <build>
+        <plugins>
+            <plugin>
+                <groupId>org.springframework.boot</groupId>
+                <artifactId>spring-boot-maven-plugin</artifactId>
+            </plugin>
+        </plugins>
+    </build>
+</project>

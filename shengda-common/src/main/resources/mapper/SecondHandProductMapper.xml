@@ -1,0 +1,93 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.example.demo.mapper.SecondHandProductMapper">
+    
+    <resultMap id="SecondHandProductResult" type="com.example.demo.model.SecondHandProduct">
+        <result column="product_id" property="productId"/>
+        <result column="user_name" property="userName"/>
+        <result column="product_name" property="productName"/>
+        <result column="product_description" property="productDescription"/>
+        <result column="product_condition" property="productCondition"/>
+        <result column="price" property="price"/>
+        <result column="original_price" property="originalPrice"/>
+        <result column="product_images" property="productImages"/>
+        <result column="category" property="category"/>
+        <result column="status" property="status"/>
+        <result column="view_count" property="viewCount"/>
+        <result column="want_count" property="wantCount"/>
+        <result column="create_time" property="createTime"/>
+        <result column="update_time" property="updateTime"/>
+    </resultMap>
+    
+    <!-- 查询所有在售商品 -->
+    <select id="listOnSaleProducts" resultMap="SecondHandProductResult">
+        SELECT * FROM second_hand_product 
+        WHERE status = 'on_sale'
+        ORDER BY create_time DESC
+        LIMIT #{offset}, #{limit}
+    </select>
+    
+    <!-- 根据用户名查询商品 -->
+    <select id="listByUserName" resultMap="SecondHandProductResult">
+        SELECT * FROM second_hand_product 
+        WHERE user_name = #{userName}
+        ORDER BY create_time DESC
+    </select>
+    
+    <!-- 根据 ID 查询商品 -->
+    <select id="getById" resultMap="SecondHandProductResult">
+        SELECT * FROM second_hand_product 
+        WHERE product_id = #{productId}
+    </select>
+    
+    <!-- 发布商品 -->
+    <insert id="insert" parameterType="com.example.demo.model.SecondHandProduct" useGeneratedKeys="true" keyProperty="productId">
+        INSERT INTO second_hand_product (
+            user_name, product_name, product_description, product_condition,
+            price, original_price, product_images, category, status
+        ) VALUES (
+            #{userName}, #{productName}, #{productDescription}, #{productCondition},
+            #{price}, #{originalPrice}, #{productImages}, #{category}, #{status}
+        )
+    </insert>
+    
+    <!-- 更新商品 -->
+    <update id="update" parameterType="com.example.demo.model.SecondHandProduct">
+        UPDATE second_hand_product
+        SET product_name = #{productName},
+            product_description = #{productDescription},
+            product_condition = #{productCondition},
+            price = #{price},
+            original_price = #{originalPrice},
+            product_images = #{productImages},
+            category = #{category},
+            status = #{status}
+        WHERE product_id = #{productId}
+    </update>
+    
+    <!-- 删除商品 -->
+    <delete id="deleteById">
+        DELETE FROM second_hand_product WHERE product_id = #{productId}
+    </delete>
+    
+    <!-- 增加浏览次数 -->
+    <update id="incrementViewCount">
+        UPDATE second_hand_product 
+        SET view_count = view_count + 1 
+        WHERE product_id = #{productId}
+    </update>
+    
+    <!-- 增加想要人数 -->
+    <update id="incrementWantCount">
+        UPDATE second_hand_product 
+        SET want_count = want_count + 1 
+        WHERE product_id = #{productId}
+    </update>
+    
+    <!-- 更新商品状态 -->
+    <update id="updateStatus">
+        UPDATE second_hand_product 
+        SET status = #{status}
+        WHERE product_id = #{productId}
+    </update>
+</mapper>
